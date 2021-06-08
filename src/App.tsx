@@ -1,5 +1,7 @@
 import axios from "axios";
-const projectStream = require('project-geojson')
+//const projectStream = require('project-geojson')
+//import proj4 from 'proj4'
+import reproject from 'reproject';
 const { stringify } = require('wkt');
 
 
@@ -56,8 +58,12 @@ const goal = 'https://openmaps.gov.bc.ca/geo/pub/wfs?SERVICE=WFS&VERSION=1.1.0&R
 const baseURL = 'https://openmaps.gov.bc.ca/geo/pub/wfs?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&outputFormat=json&typeName=pub:'
 const layerName = 'WHSE_WATER_MANAGEMENT.GW_WATER_WELLS_WRBC_SVW'
 const projection = '&SRSNAME=EPSG:3005'
-const cql = '&CQL_FILTER=WITHIN(GEOMETRY,POLYGON((830772.7%20367537.4,%201202463%20367537.4,%201202463%20651616.7,%20830772.7%20651616.7,%20830772.7%20367537.4)))'
+const originalcql = '&CQL_FILTER=WITHIN(GEOMETRY,POLYGON((830772.7%20367537.4,%201202463%20367537.4,%201202463%20651616.7,%20830772.7%20651616.7,%20830772.7%20367537.4)))'
 
+
+
+const reprojected = reproject.reproject(sampleGeoJson, 'EPSG:3005', 'EPSG:3857')
+console.dir(reprojected)
 let actual = baseURL + layerName + projection + trywkt(sampleGeoJson.features[0])
 
 const getStuff = async (input: string) => {
