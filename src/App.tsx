@@ -2,7 +2,10 @@ import axios from "axios";
 //const projectStream = require('project-geojson')
 //import proj4 from 'proj4'
 import reproject from 'reproject';
+import proj4 from 'proj4';
 const { stringify } = require('wkt');
+var epsg = require('epsg');
+
 
 
 const sampleGeoJson = {
@@ -50,7 +53,7 @@ const sampleGeoJson = {
   ]
 }
 
-const trywkt = (input: any) => {
+const wktConvert = (input: any) => {
   console.log('input:' + input)
   return stringify(input)
 }
@@ -62,16 +65,28 @@ const originalcql = '&CQL_FILTER=WITHIN(GEOMETRY,POLYGON((830772.7%20367537.4,%2
 
 
 
-const reprojected = reproject.reproject(sampleGeoJson, 'EPSG:3005', 'EPSG:3857')
-console.dir(reprojected)
-let actual = baseURL + layerName + projection + trywkt(sampleGeoJson.features[0])
+// nfg: const reprojected = reproject.reproject(JSON.stringify(sampleGeoJson.features[0]).replaceAll(' ', ''), 'EPSG:4326', '+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 +lon_0=-126 +x_0=1000000 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs', epsg)
+// something returned at least : const reprojected = reproject.reproject(sampleGeoJson.features[0], proj4.WGS84, proj4('EPSG:4326'))
+// nfg: const reprojected = reproject.reproject(sampleGeoJson.features[0], proj4('EPSG:4326'), proj4('EPSG:3005'))
+// nfg: const reprojected = reproject.reproject(sampleGeoJson.features[0], proj4('EPSG:4326'), proj4('EPSG:3005'))
+// nfg: const reprojected = reproject.reproject(sampleGeoJson.features[0], proj4.WGS84, proj4('EPSG:3005'))
+// nfg: const reprojected = reproject.reproject(sampleGeoJson.features[0], proj4.WGS84, proj4('EPSG:3005'), { "EPSG:3005":  "+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 +lon_0=-126 +x_0=1000000 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"})
+
+//works!!
+proj4.defs("EPSG:3005", "+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 +lon_0=-126 +x_0=1000000 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs")
+const reprojected = reproject.reproject(sampleGeoJson.features[0], proj4.WGS84, proj4('EPSG:3005'))
+const reprojectedAsWKT = wktConvert(reprojected)
+//const convertedGeoWithoutWhitespace = reprojectedAsWKT.replaceAll(' ','')
+const customCQL = '&CQL_FILTER=WITHIN(GEOMETRY,' + reprojectedAsWKT  + ')'
+let actual = baseURL + layerName + projection + customCQL
+console.log('actual: ' + actual)
 
 const getStuff = async (input: string) => {
   let resp = await axios.get(actual)
   console.log(JSON.stringify(resp)) 
 }
 
-getStuff(goal);
+//getStuff(goal);
 getStuff(actual)
 
 
